@@ -1,0 +1,33 @@
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# Python environments, bytecode, and test caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# Local database and runtime state
+/instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# User-uploaded files
+/static/uploads/*
+!/static/uploads/.gitkeep
+
+# Downloaded training data (the training script can download it when needed)
+/dataset/*
+!/dataset/.gitkeep
+
+# Local logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db

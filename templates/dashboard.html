@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Welcome Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-1 text-white">
+        Welcome, <span class="cooper-highlight">{{ current_user.full_name or current_user.username }}</span>
+      </h2>
+      <p class="mb-0" style="color: var(--text-muted);">
+        Real-time telemetry, active 24h company portal monitors, and fraud detection analytics.
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('text_detection') }}" class="btn btn-primary-gradient shadow-sm">
+        <i class="bi bi-file-earmark-text me-1"></i> New Text Analysis
+      </a>
+      <a href="{{ url_for('image_detection') }}" class="btn btn-outline-primary">
+        <i class="bi bi-card-image me-1"></i> Upload Poster
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget p-3">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Total Analysed</span>
+        <h3 class="fw-bold text-white mb-0 mt-1">{{ total_analysed }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget genuine p-3" style="border-left: 3px solid #10B981;">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Likely Genuine</span>
+        <h3 class="fw-bold text-success mb-0 mt-1">{{ genuine_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget suspicious p-3" style="border-left: 3px solid #EF4444;">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Likely Suspicious</span>
+        <h3 class="fw-bold text-danger mb-0 mt-1">{{ suspicious_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget unverified p-3" style="border-left: 3px solid #F59E0B;">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Unverified</span>
+        <h3 class="fw-bold text-warning mb-0 mt-1">{{ unverified_count }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget p-3" style="border-left: 3px solid var(--neon-cyan);">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Monitored Sites</span>
+        <h3 class="fw-bold text-cyan mb-0 mt-1">{{ monitored_companies }}</h3>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+      <div class="glass-card stat-widget p-3" style="border-left: 3px solid #7C3AED;">
+        <span class="small fw-semibold d-block text-uppercase" style="color: var(--text-muted); letter-spacing: 0.5px;">Unread Alerts</span>
+        <h3 class="fw-bold mb-0 mt-1" style="color: #A78BFA;">{{ unread_notification_count }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Recent Analyses Table -->
+    <div class="col-lg-8">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-white mb-0">
+            <i class="bi bi-clock-history text-cyan me-2"></i>Recent Job Submissions
+          </h5>
+          <a href="{{ url_for('history') }}" class="btn btn-sm btn-link text-cyan text-decoration-none">View All History &rarr;</a>
+        </div>
+
+        {% if recent_jobs %}
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 text-light" style="border-color: rgba(255, 255, 255, 0.08);">
+            <thead class="small text-uppercase" style="background: rgba(13, 21, 44, 0.8); color: var(--text-muted); letter-spacing: 0.6px;">
+              <tr>
+                <th class="py-2">Company</th>
+                <th class="py-2">Role</th>
+                <th class="py-2">ML Prediction</th>
+                <th class="py-2">Official Verification</th>
+                <th class="py-2 text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in recent_jobs %}
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                <td class="fw-semibold text-white">
+                  {{ job.company_name }}
+                  <span class="badge border border-secondary border-opacity-25 ms-1 small" style="background: rgba(22, 34, 68, 0.5); color: var(--text-muted);">
+                    {{ job.submission_type }}
+                  </span>
+                </td>
+                <td class="text-light">{{ job.job_title }}</td>
+                <td>
+                  {% if job.is_fake %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                    Likely Fake ({{ (job.confidence_score * 100)|round(0) }}%)
+                  </span>
+                  {% else %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    Likely Genuine ({{ (job.confidence_score * 100)|round(0) }}%)
+                  </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.verification_status == 'VERIFIED GENUINE' %}
+                  <span class="badge-status status-verified small py-1">Verified Genuine</span>
+                  {% elif job.verification_status == 'LIKELY SUSPICIOUS' %}
+                  <span class="badge-status status-suspicious small py-1">Suspicious</span>
+                  {% else %}
+                  <span class="badge-status status-unverified small py-1">Unverified</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('result', submission_id=job.id) }}" class="btn btn-sm btn-outline-primary py-0">Details</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5" style="color: var(--text-muted);">
+          <img src="{{ url_for('static', filename='images/empty-state.svg') }}" alt="No submissions" style="width: 140px; opacity: 0.8;" class="mb-3">
+          <p class="mb-2 text-light">You haven't submitted any jobs for detection yet.</p>
+          <a href="{{ url_for('text_detection') }}" class="btn btn-sm btn-primary-gradient mt-2">Start First Analysis</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent Notifications & Alerts -->
+    <div class="col-lg-4">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-white mb-0">
+            <i class="bi bi-bell text-warning me-2"></i>Recent Alerts
+          </h5>
+          <a href="{{ url_for('notifications') }}" class="btn btn-sm btn-link text-cyan text-decoration-none">View All</a>
+        </div>
+
+        {% if recent_notifs %}
+        <div class="d-grid gap-2">
+          {% for n in recent_notifs %}
+          <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.6);">
+            <div class="d-flex w-100 justify-content-between align-items-start">
+              <strong class="text-white text-truncate" style="max-width: 180px;">{{ n.job_title }}</strong>
+              <small class="text-cyan fw-bold">{{ n.match_percentage }}% match</small>
+            </div>
+            <p class="small mb-2 text-truncate" style="color: var(--text-muted);">{{ n.company_name }} &bull; {{ n.verification_status }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <small style="color: var(--text-dim);">{{ n.created_at[:16] }}</small>
+              {% if n.source_link %}
+              <a href="{{ n.source_link }}" target="_blank" rel="noopener" class="small text-cyan text-decoration-none">View Source &rarr;</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4" style="color: var(--text-muted);">
+          <i class="bi bi-bell-slash fs-2 d-block mb-2 text-secondary"></i>
+          <p class="small mb-1 text-light">No vacancy alerts at this time.</p>
+          <small class="d-block" style="color: var(--text-dim);">New vacancies matching 70%+ of your preferences will appear here automatically.</small>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Monitored Companies Status Row -->
+  <div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold text-white mb-0">
+          <i class="bi bi-globe2 text-cyan me-2"></i>Active Monitored Company Portals
+        </h5>
+        <small style="color: var(--text-muted);">Automated 24-hour crawling against official career portals</small>
+      </div>
+      <a href="{{ url_for('monitoring') }}" class="btn btn-sm btn-outline-primary">Manage 24h Monitoring</a>
+    </div>
+
+    {% if monitored_sites %}
+    <div class="row g-3">
+      {% for site in monitored_sites %}
+      <div class="col-md-6 col-lg-4">
+        <div class="p-3 rounded-3 border border-secondary border-opacity-25 h-100" style="background: rgba(13, 21, 44, 0.7);">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong class="fs-6 text-white">{{ site.company_name }}</strong>
+            <span class="badge {% if site.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ site.status|capitalize }}
+            </span>
+          </div>
+          <p class="small text-truncate mb-2" style="color: var(--text-muted);" title="{{ site.careers_url }}">
+            <i class="bi bi-link-45deg text-cyan"></i> {{ site.careers_url }}
+          </p>
+          <div class="d-flex justify-content-between small" style="color: var(--text-dim);">
+            <span>Open Vacancies: <strong class="text-white">{{ site.vacancy_count }}</strong></span>
+            <span>Checked: {{ site.last_checked_at[:10] if site.last_checked_at else 'Pending' }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-4" style="color: var(--text-muted);">
+      <p class="mb-2 text-light">No companies are currently being monitored.</p>
+      <a href="{{ url_for('monitoring') }}" class="btn btn-sm btn-primary-gradient">Add a Company Careers Portal</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

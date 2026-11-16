@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Poster Upload - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Section Header -->
+      <div class="d-flex align-items-center mb-4">
+        <div class="brand-icon fs-3 me-3"><i class="bi bi-card-image"></i></div>
+        <div>
+          <h2 class="fw-bold mb-0 text-white">Recruitment Poster <span class="cooper-highlight">Analysis</span></h2>
+          <p class="mb-0" style="color: var(--text-muted);">
+            Upload a job recruitment banner or poster to extract text using OCR, review the parsed telemetry, and cross-verify with corporate registries.
+          </p>
+        </div>
+      </div>
+
+      {% if not ocr_available %}
+      <div class="alert alert-warning border border-warning border-opacity-25 bg-opacity-10 mb-4" role="status">
+        <i class="bi bi-info-circle me-2"></i>
+        OCR engine is running in fallback manual review mode. You can still input or paste details manually below.
+      </div>
+      {% endif %}
+
+      <!-- Glassmorphic Poster Upload Card -->
+      <div class="glass-card dropzone-container p-4 p-md-5">
+        <!-- Interactive Dropzone Area -->
+        <div id="poster-dropzone" class="dropzone-area mb-4 position-relative"
+             data-ocr-url="{{ url_for('api_ocr_extract') }}" role="button" tabindex="0"
+             aria-label="Choose or drop a JPG, JPEG, or PNG recruitment poster">
+          
+          <div id="upload-prompt" class="py-4">
+            <div class="mb-3">
+              <i class="bi bi-cloud-arrow-up display-4 text-cyan"></i>
+            </div>
+            <h3 class="h5 fw-bold text-white mb-2">Drag &amp; Drop Job Poster or <span class="text-cyan text-decoration-underline">Browse</span></h3>
+            <p class="small mb-0" style="color: var(--text-muted);">
+              Supported image formats: <strong class="text-white">JPG, JPEG, PNG</strong> (Max file size: 16 MB)
+            </p>
+            <div class="mt-3">
+              <span class="badge border border-info border-opacity-25" style="background: rgba(6, 214, 224, 0.1); color: var(--neon-cyan);">
+                <i class="bi bi-eye me-1"></i> Automated OCR Layout &amp; Text Parsing
+              </span>
+            </div>
+          </div>
+
+          <!-- Preview Area with Remove Button -->
+          <div id="poster-preview-area" class="preview-container d-none position-relative">
+            <img id="poster-preview-img" src="" alt="Recruitment poster preview" class="img-fluid rounded border border-secondary border-opacity-25">
+            <button type="button" id="remove-poster-btn" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-3 shadow">
+              <i class="bi bi-trash me-1"></i>Remove Poster
+            </button>
+          </div>
+
+          <input type="file" id="poster-file-input" class="visually-hidden"
+                 accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+        </div>
+
+        <!-- OCR Processing Spinner -->
+        <div id="ocr-loading-spinner" class="d-none text-center my-4 py-3" role="status">
+          <div class="spinner-border text-cyan" role="status" style="width: 2.5rem; height: 2.5rem;">
+            <span class="visually-hidden">Scanning...</span>
+          </div>
+          <div class="mt-3 fw-bold text-white">Extracting text &amp; layout structures from poster…</div>
+          <small class="text-cyan">Executing Optical Character Recognition &bull; Please wait</small>
+        </div>
+
+        <!-- OCR Notice Alert -->
+        <div id="ocr-notice-alert" class="alert alert-warning border border-warning border-opacity-25 bg-opacity-10 d-none" role="alert">
+          <i class="bi bi-exclamation-circle me-2"></i><span id="ocr-notice-text"></span>
+          <p class="small mb-0 mt-2">You can review, edit, or supply missing information in the fields below.</p>
+        </div>
+
+        <!-- Verification Form -->
+        <form method="POST" action="{{ url_for('submit_image_detection') }}" enctype="multipart/form-data">
+          <input type="hidden" name="image_path" id="form-image-path">
+          <input type="hidden" name="image_name" id="form-image-name">
+          <input type="hidden" name="ocr_engine" id="form-ocr-engine" value="Tesseract OCR">
+          <input type="hidden" name="raw_text" id="form-raw-text">
+
+          <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-4">
+            <h3 class="h5 fw-bold text-white mb-0">
+              <i class="bi bi-pencil-square text-cyan me-2"></i>Review and correct extracted job details
+            </h3>
+            <span class="badge border border-secondary border-opacity-25 small" style="color: var(--text-muted); background: rgba(22, 34, 68, 0.6);">
+              OCR Parsed Fields
+            </span>
+          </div>
+          <p class="small mb-4" style="color: var(--text-muted);">
+            Information parsed from the poster is pre-filled below. Please verify and refine any details before triggering ML classification and official domain checks.
+          </p>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="field_company_name" class="form-label fw-semibold text-light">Company Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="field_company_name" name="company_name" placeholder="e.g. Acme Corporation" required>
+            </div>
+            <div class="col-md-6">
+              <label for="field_job_title" class="form-label fw-semibold text-light">Job Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="field_job_title" name="job_title" placeholder="e.g. Senior Security Analyst" required>
+            </div>
+            <div class="col-12">
+              <label for="field_job_description" class="form-label fw-semibold text-light">Extracted / Job Description Text <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="field_job_description" name="job_description" rows="7" required
+                        placeholder="Extracted poster text will appear here. Review, correct, or add content before analysis..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label for="field_salary" class="form-label fw-semibold text-light">Salary / Compensation</label>
+              <input type="text" class="form-control" id="field_salary" name="salary" placeholder="e.g. $85,000 - $110,000 / year">
+            </div>
+            <div class="col-md-6">
+              <label for="field_job_location" class="form-label fw-semibold text-light">Location</label>
+              <input type="text" class="form-control" id="field_job_location" name="job_location" placeholder="e.g. New York, NY or Remote">
+            </div>
+            <div class="col-md-6">
+              <label for="field_required_skills" class="form-label fw-semibold text-light">Required Skills</label>
+              <input type="text" class="form-control" id="field_required_skills" name="required_skills" placeholder="e.g. Python, SQL, Cloud Architecture">
+            </div>
+            <div class="col-md-6">
+              <label for="field_experience_requirements" class="form-label fw-semibold text-light">Experience Requirements</label>
+              <input type="text" class="form-control" id="field_experience_requirements" name="experience_requirements" placeholder="e.g. 3-5 years experience">
+            </div>
+            <div class="col-md-6">
+              <label for="field_education" class="form-label fw-semibold text-light">Education / Qualification</label>
+              <input type="text" class="form-control" id="field_education" name="education" placeholder="e.g. Bachelor's in CS or equivalent">
+            </div>
+            <div class="col-md-6">
+              <label for="field_recruiter_email" class="form-label fw-semibold text-light">Recruiter Email</label>
+              <input type="email" class="form-control" id="field_recruiter_email" name="recruiter_email" placeholder="e.g. careers@company.com">
+            </div>
+            <div class="col-md-6">
+              <label for="field_contact_number" class="form-label fw-semibold text-light">Contact Number</label>
+              <input type="tel" class="form-control" id="field_contact_number" name="contact_number" placeholder="e.g. +1 (555) 019-2834">
+            </div>
+            <div class="col-md-6">
+              <label for="field_application_url" class="form-label fw-semibold text-light">Application URL</label>
+              <input type="url" class="form-control" id="field_application_url" name="application_url" placeholder="https://careers.company.com/apply">
+            </div>
+            <div class="col-md-6">
+              <label for="field_official_website_url" class="form-label fw-semibold text-light">Official Company Website</label>
+              <input type="url" class="form-control" id="field_official_website_url" name="official_website_url" placeholder="https://www.company.com">
+            </div>
+            <div class="col-12">
+              <label for="field_official_careers_url" class="form-label fw-semibold text-light">Official Company Careers URL</label>
+              <input type="url" class="form-control" id="field_official_careers_url" name="official_careers_url" placeholder="https://www.company.com/careers">
+            </div>
+          </div>
+
+          <details class="mt-4 p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.6);">
+            <summary class="fw-semibold text-light" style="cursor: pointer;">Review raw OCR text</summary>
+            <textarea id="raw-text-preview" class="form-control mt-3 font-monospace small" rows="8" readonly
+                      aria-label="Raw OCR text for review" style="background: rgba(8, 13, 27, 0.9); color: var(--neon-cyan);"></textarea>
+          </details>
+
+          <div class="d-grid mt-4 pt-2">
+            <button type="submit" class="btn btn-primary-gradient btn-lg fw-bold shadow-sm">
+              <i class="bi bi-shield-check me-2"></i>Upload and Analyse Job
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

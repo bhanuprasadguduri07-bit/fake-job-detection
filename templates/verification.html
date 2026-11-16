@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Company - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <!-- Section Header -->
+      <div class="d-flex align-items-center mb-4">
+        <div class="brand-icon fs-3 me-3"><i class="bi bi-patch-check"></i></div>
+        <div>
+          <h2 class="fw-bold mb-0 text-white cooper-highlight">Official Company Website Verification</h2>
+          <p class="mb-0" style="color: var(--text-muted);">
+            Query official company domains, validated careers endpoints, and verified recruitment portals to confirm legitimate employment vacancies.
+          </p>
+        </div>
+      </div>
+
+      <!-- Verification Query Glass Card -->
+      <form method="POST" action="{{ url_for('verification') }}" class="glass-card p-4 p-md-5 mb-4" autocomplete="off">
+        <div class="border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-search text-cyan me-2"></i>Verify Company and Vacancy</h3>
+          <p class="small mb-0" style="color: var(--text-muted);">Cross-checks DNS, official website domain records, and live career postings.</p>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="company_name" class="form-label fw-semibold text-light">Company Name <span class="text-danger">*</span></label>
+            <input id="company_name" name="company_name" class="form-control" required placeholder="e.g. Google, Microsoft, Infosys">
+          </div>
+          <div class="col-md-6">
+            <label for="job_title" class="form-label fw-semibold text-light">Job Title <span class="text-danger">*</span></label>
+            <input id="job_title" name="job_title" class="form-control" required placeholder="e.g. Software Engineer">
+          </div>
+          <div class="col-md-6">
+            <label for="careers_url" class="form-label fw-semibold text-light">Official Careers URL</label>
+            <input id="careers_url" name="careers_url" type="url" class="form-control" placeholder="https://careers.example.com">
+          </div>
+          <div class="col-md-6">
+            <label for="app_url" class="form-label fw-semibold text-light">Application URL</label>
+            <input id="app_url" name="app_url" type="url" class="form-control" placeholder="https://apply.example.com/job/123">
+          </div>
+          <div class="col-12">
+            <label for="recruiter_email" class="form-label fw-semibold text-light">Recruiter Email</label>
+            <input id="recruiter_email" name="recruiter_email" type="email" class="form-control" placeholder="recruiter@example.com">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-gradient mt-4 px-4 py-2 fw-semibold">
+          <i class="bi bi-shield-check me-2"></i>Verify Company and Job
+        </button>
+      </form>
+
+      {% if result %}
+      <section class="glass-card p-4 p-md-5 mt-4" aria-labelledby="verification-result-heading">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 id="verification-result-heading" class="h4 fw-bold text-white mb-0">Verification Result</h3>
+          {% set status = result.official_verification_status %}
+          <span class="badge-status {% if status == 'VERIFIED GENUINE' %}status-verified{% elif status == 'LIKELY SUSPICIOUS' %}status-suspicious{% else %}status-unverified{% endif %} fs-6 py-2 px-3">
+            {{ status }}
+          </span>
+        </div>
+
+        <div class="p-3 rounded-3 mb-4" style="background: rgba(13, 21, 44, 0.7); border-left: 4px solid var(--neon-cyan);">
+          <p class="mb-0 text-light">{{ result.explanation }}</p>
+        </div>
+
+        <div class="row g-3 mb-3">
+          {% if result.official_website_url %}
+          <div class="col-md-6">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(17, 27, 53, 0.5);">
+              <small class="text-muted d-block text-uppercase fw-semibold mb-1">Official Website</small>
+              <a href="{{ result.official_website_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-break fw-semibold text-decoration-none">
+                {{ result.official_website_url }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if result.careers_page_url %}
+          <div class="col-md-6">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(17, 27, 53, 0.5);">
+              <small class="text-muted d-block text-uppercase fw-semibold mb-1">Careers Portal</small>
+              <a href="{{ result.careers_page_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-break fw-semibold text-decoration-none">
+                {{ result.careers_page_url }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if result.vacancy_matched and result.matching_vacancy_details %}
+        <div class="p-3 rounded-3 border border-success border-opacity-25 mb-4" style="background: rgba(16, 185, 129, 0.1);">
+          <div class="d-flex align-items-center text-success fw-bold">
+            <i class="bi bi-patch-check-fill fs-5 me-2"></i> Matching vacancy: Confirmed from a published job listing.
+          </div>
+        </div>
+        {% endif %}
+
+        {% if result.evidence %}
+        <h4 class="h6 fw-bold text-white text-uppercase mt-4 mb-3" style="letter-spacing: 0.5px;">Evidence</h4>
+        <ul class="list-unstyled d-grid gap-2 mb-4">
+          {% for item in result.evidence %}
+          <li class="p-2 px-3 rounded-2 border border-secondary border-opacity-25 text-light d-flex align-items-center" style="background: rgba(13, 21, 44, 0.6);">
+            <i class="bi bi-check-circle text-cyan me-2"></i> {{ item }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if result.source_urls %}
+        <h4 class="h6 fw-bold text-white text-uppercase mt-4 mb-3" style="letter-spacing: 0.5px;">Sources</h4>
+        <ul class="list-unstyled d-grid gap-2 mb-4">
+          {% for source_url in result.source_urls %}
+          <li class="p-2 px-3 rounded-2 border border-secondary border-opacity-25 text-break" style="background: rgba(13, 21, 44, 0.6);">
+            <i class="bi bi-link-45deg text-cyan me-1"></i>
+            <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer" class="text-muted text-decoration-none">{{ source_url }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if result.matching_vacancy_details %}
+        <h4 class="h6 fw-bold text-white text-uppercase mt-4 mb-3" style="letter-spacing: 0.5px;">Matching Vacancy Details</h4>
+        <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.6);">
+          <dl class="row mb-0">
+            {% for key, value in result.matching_vacancy_details.items() %}
+            <dt class="col-sm-4 text-muted">{{ key|replace("_", " ")|title }}</dt>
+            <dd class="col-sm-8 text-light fw-semibold">{{ value }}</dd>
+            {% endfor %}
+          </dl>
+        </div>
+        {% endif %}
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

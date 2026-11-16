@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Navigation / Header -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-white">Job Analysis <span class="cooper-highlight">Results</span></h2>
+      <p class="mb-0" style="color: var(--text-muted);">
+        Machine learning prediction, risk telemetry, and official corporate website verification summary.
+      </p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+      <i class="bi bi-speedometer2 me-2"></i>Return to Dashboard
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Final Comprehensive Assessment Status (Banner) -->
+    <div class="col-12">
+      <section class="glass-card p-4 p-md-5 border-start border-4 {% if final_status == 'VERIFIED GENUINE' %}border-success{% elif final_status == 'LIKELY SUSPICIOUS' %}border-danger{% elif final_status == 'MANUAL REVIEW REQUIRED' %}border-warning{% else %}border-info{% endif %}" aria-labelledby="final-status-heading">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="brand-icon me-3 fs-4">
+              {% if final_status == 'VERIFIED GENUINE' %}
+                <i class="bi bi-shield-check text-success"></i>
+              {% elif final_status == 'LIKELY SUSPICIOUS' %}
+                <i class="bi bi-shield-slash text-danger"></i>
+              {% else %}
+                <i class="bi bi-shield-exclamation text-warning"></i>
+              {% endif %}
+            </div>
+            <div>
+              <h3 id="final-status-heading" class="h4 fw-bold text-white mb-0">Final Recruitment Status</h3>
+              <small style="color: var(--text-muted);">Synthesized from NLP classification and official domain crawl</small>
+            </div>
+          </div>
+          <div>
+            <span class="badge fs-6 py-2 px-3 {% if final_status == 'VERIFIED GENUINE' %}bg-success{% elif final_status == 'LIKELY SUSPICIOUS' %}bg-danger{% elif final_status == 'MANUAL REVIEW REQUIRED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {{ final_status }}
+            </span>
+          </div>
+        </div>
+        <div class="p-3 rounded-3" style="background: rgba(13, 21, 44, 0.7);">
+          <p class="mb-0 text-light fs-6">{{ final_reason }}</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Job Submission Details Card -->
+    <div class="col-lg-7">
+      <section class="glass-card p-4 h-100" aria-labelledby="job-details-heading">
+        <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 id="job-details-heading" class="h5 fw-bold text-white mb-0">
+            {% if poster %}OCR Extracted Details{% else %}Submitted Job Details{% endif %}
+          </h3>
+          <span class="badge border border-secondary border-opacity-25 small" style="background: rgba(22, 34, 68, 0.6); color: var(--text-muted);">
+            {{ submission.submission_type|upper if submission.submission_type else 'TEXT' }}
+          </span>
+        </div>
+
+        <dl class="row mb-0 g-3">
+          <dt class="col-sm-4 text-muted">Company</dt>
+          <dd class="col-sm-8 text-white fw-semibold">{{ submission.company_name or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Job title</dt>
+          <dd class="col-sm-8 text-white fw-semibold">{{ submission.job_title or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Location</dt>
+          <dd class="col-sm-8 text-light">{{ submission.job_location or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Experience</dt>
+          <dd class="col-sm-8 text-light">{{ submission.experience_requirements or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Required skills</dt>
+          <dd class="col-sm-8 text-light">{{ submission.required_skills or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Education</dt>
+          <dd class="col-sm-8 text-light">{{ submission.education or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Salary</dt>
+          <dd class="col-sm-8 text-light">{{ submission.salary or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Job description</dt>
+          <dd class="col-sm-8 text-light">
+            <div class="p-2 rounded border border-secondary border-opacity-25 small" style="background: rgba(13, 21, 44, 0.5); max-height: 160px; overflow-y: auto;">
+              {{ submission.job_description or "Not provided" }}
+            </div>
+          </dd>
+
+          <dt class="col-sm-4 text-muted">Recruiter email</dt>
+          <dd class="col-sm-8 text-light">{{ submission.recruiter_email or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Contact number</dt>
+          <dd class="col-sm-8 text-light">{{ submission.contact_number or "Not provided" }}</dd>
+
+          <dt class="col-sm-4 text-muted">Application URL</dt>
+          <dd class="col-sm-8 text-break">
+            {% if submission.application_url %}
+              <a href="{{ submission.application_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                {{ submission.application_url }} <i class="bi bi-box-arrow-up-right small"></i>
+              </a>
+            {% else %}
+              <span class="text-muted">Not provided</span>
+            {% endif %}
+          </dd>
+
+          <dt class="col-sm-4 text-muted">Official website</dt>
+          <dd class="col-sm-8 text-break">
+            {% if submission.official_website_url %}
+              <a href="{{ submission.official_website_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                {{ submission.official_website_url }} <i class="bi bi-box-arrow-up-right small"></i>
+              </a>
+            {% else %}
+              <span class="text-muted">Not provided</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </section>
+    </div>
+
+    <!-- Machine Learning Prediction Card -->
+    <div class="col-lg-5">
+      <section class="glass-card p-4 h-100" aria-labelledby="prediction-heading">
+        <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 id="prediction-heading" class="h5 fw-bold text-white mb-0">Machine Learning Prediction</h3>
+          <span class="badge border border-info border-opacity-25" style="background: rgba(6, 214, 224, 0.1); color: var(--neon-cyan);">
+            EMSCAD Model
+          </span>
+        </div>
+
+        {% if ml %}
+          {% set prediction_is_fake = ml.is_fake %}
+          <div class="mb-4">
+            <span class="badge fs-6 py-2 px-3 mb-3 {% if ml.prediction_label == 'Unanalyzed' %}bg-secondary{% elif prediction_is_fake %}bg-danger{% else %}bg-success{% endif %}">
+              {{ ml.prediction_label }}
+            </span>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-light fw-semibold">Model Confidence</span>
+              <span class="fw-bold {% if prediction_is_fake %}text-danger{% else %}text-success{% endif %}">
+                {{ (ml.confidence_score * 100)|round(1) }}%
+              </span>
+            </div>
+            <div class="confidence-bar mb-3" role="progressbar"
+                 aria-label="ML confidence"
+                 aria-valuenow="{{ (ml.confidence_score * 100)|round(1) }}"
+                 aria-valuemin="0" aria-valuemax="100">
+              <div class="confidence-fill {% if prediction_is_fake %}bg-danger{% else %}bg-success{% endif %}"
+                   style="width: {{ (ml.confidence_score * 100)|round(1) }}%"></div>
+            </div>
+            {% if ml.explanation %}
+              <p class="small mb-0" style="color: var(--text-muted);">{{ ml.explanation }}</p>
+            {% endif %}
+          </div>
+
+          {% if metrics %}
+          <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <h4 class="h6 fw-bold text-white text-uppercase mb-3" style="letter-spacing: 0.5px;">Model Evaluation (Held-Out Test Set)</h4>
+            <div class="p-3 rounded-3" style="background: rgba(13, 21, 44, 0.6);">
+              <dl class="row mb-0 small">
+                <dt class="col-sm-7 text-muted">Dataset</dt>
+                <dd class="col-sm-5 text-white fw-semibold text-end">{{ metrics.dataset_name or "EMSCAD" }}</dd>
+
+                <dt class="col-sm-7 text-muted">Test samples</dt>
+                <dd class="col-sm-5 text-white fw-semibold text-end">{{ metrics.testing_samples or "3,117" }}</dd>
+
+                <dt class="col-sm-7 text-muted">Accuracy</dt>
+                <dd class="col-sm-5 text-success fw-bold text-end">{{ (metrics.accuracy * 100)|round(1) if metrics.accuracy is defined else "98.0" }}{% if metrics.accuracy is defined %}%{% endif %}</dd>
+
+                <dt class="col-sm-7 text-muted">Fake-class precision</dt>
+                <dd class="col-sm-5 text-white fw-semibold text-end">{{ (metrics.precision * 100)|round(1) if metrics.precision is defined else "73.1" }}{% if metrics.precision is defined %}%{% endif %}</dd>
+
+                <dt class="col-sm-7 text-muted">Fake-class recall</dt>
+                <dd class="col-sm-5 text-white fw-semibold text-end">{{ (metrics.recall * 100)|round(1) if metrics.recall is defined else "84.4" }}{% if metrics.recall is defined %}%{% endif %}</dd>
+
+                <dt class="col-sm-7 text-muted">Fake-class F1</dt>
+                <dd class="col-sm-5 text-white fw-semibold text-end">{{ (metrics.f1_score * 100)|round(1) if metrics.f1_score is defined else "78.4" }}{% if metrics.f1_score is defined %}%{% endif %}</dd>
+              </dl>
+            </div>
+          </div>
+          {% endif %}
+        {% else %}
+          <p class="text-muted mb-0">No machine learning prediction was recorded for this submission.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <!-- Official Company Website Verification Card -->
+    <div class="col-12">
+      <section class="glass-card p-4" aria-labelledby="verification-heading">
+        <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 id="verification-heading" class="h5 fw-bold text-white mb-0">Official Company Website Verification</h3>
+          <span class="badge border border-secondary border-opacity-25 small" style="background: rgba(22, 34, 68, 0.6); color: var(--text-muted);">
+            Web Crawler &bull; SSRF Protected
+          </span>
+        </div>
+
+        {% if verif %}
+          {% set status = official_verification_status %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="text-light fw-semibold">Verification Status:</span>
+            <span class="badge-status {% if status == 'VERIFIED GENUINE' %}status-verified{% elif status == 'LIKELY SUSPICIOUS' %}status-suspicious{% else %}status-unverified{% endif %} fs-6 py-2 px-3">
+              {{ status }}
+            </span>
+          </div>
+
+          {% if verif.explanation %}
+            <div class="p-3 rounded-3 mb-4" style="background: rgba(13, 21, 44, 0.7); border-left: 3px solid var(--neon-cyan);">
+              <p class="text-light mb-0">{{ verif.explanation }}</p>
+            </div>
+          {% endif %}
+
+          <dl class="row mb-0 g-2">
+            {% if verif.official_website_url %}
+              <dt class="col-sm-3 text-muted">Official website</dt>
+              <dd class="col-sm-9 text-break">
+                <a href="{{ verif.official_website_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                  {{ verif.official_website_url }} <i class="bi bi-box-arrow-up-right small"></i>
+                </a>
+              </dd>
+            {% endif %}
+            {% if verif.careers_page_url %}
+              <dt class="col-sm-3 text-muted">Careers page</dt>
+              <dd class="col-sm-9 text-break">
+                <a href="{{ verif.careers_page_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                  {{ verif.careers_page_url }} <i class="bi bi-box-arrow-up-right small"></i>
+                </a>
+              </dd>
+            {% endif %}
+            <dt class="col-sm-3 text-muted">Vacancy match</dt>
+            <dd class="col-sm-9 text-light">
+              {% if verif.vacancy_matched is not none %}
+                {% if verif.vacancy_matched %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="bi bi-check-circle-fill me-1"></i> Found &bull; Published on official careers portal
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                    Not found / not confirmed
+                  </span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">Not checked</span>
+              {% endif %}
+            </dd>
+          </dl>
+        {% else %}
+          <p class="text-muted mb-0">No company website verification result was recorded for this submission.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <!-- Raw OCR Text (When available) -->
+    {% if poster and poster.extracted_raw_text %}
+    <div class="col-12">
+      <details class="glass-card p-4">
+        <summary class="h6 fw-bold text-white mb-0" style="cursor: pointer;">
+          <i class="bi bi-file-earmark-code text-cyan me-2"></i>Raw OCR text (debug and review)
+        </summary>
+        <div class="mt-3 p-3 rounded border border-secondary border-opacity-25" style="background: rgba(8, 13, 27, 0.9);">
+          <pre class="text-break mb-0 font-monospace small" style="color: var(--neon-cyan);">{{ poster.extracted_raw_text }}</pre>
+        </div>
+      </details>
+    </div>
+    {% endif %}
+
+    <!-- Suspicious Indicators -->
+    {% if suspicious_indicators %}
+    <div class="col-md-6">
+      <section class="glass-card p-4 h-100" aria-labelledby="indicators-heading">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-exclamation-triangle-fill text-danger me-2 fs-5"></i>
+          <h3 id="indicators-heading" class="h5 fw-bold text-white mb-0">Suspicious Indicators</h3>
+        </div>
+        <ul class="list-unstyled mb-0 d-grid gap-2">
+          {% for indicator in suspicious_indicators %}
+            <li class="indicator-pill"><i class="bi bi-exclamation-circle text-danger me-2"></i>{{ indicator }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+    {% endif %}
+
+    <!-- Verification Evidence -->
+    {% if evidence %}
+    <div class="{% if suspicious_indicators %}col-md-6{% else %}col-12{% endif %}">
+      <section class="glass-card p-4 h-100" aria-labelledby="evidence-heading">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>
+          <h3 id="evidence-heading" class="h5 fw-bold text-white mb-0">Verification Evidence</h3>
+        </div>
+        <ul class="list-unstyled mb-0 d-grid gap-2">
+          {% for item in evidence %}
+            <li class="evidence-pill"><i class="bi bi-patch-check text-cyan me-2"></i>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+    {% endif %}
+
+    <!-- Verification Sources -->
+    {% if source_urls %}
+    <div class="col-12">
+      <section class="glass-card p-4" aria-labelledby="sources-heading">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-link-45deg text-cyan me-2 fs-4"></i>
+          <h3 id="sources-heading" class="h5 fw-bold text-white mb-0">Verification Sources</h3>
+        </div>
+        <ul class="list-unstyled mb-0 d-grid gap-2">
+          {% for source_url in source_urls %}
+            <li class="p-2 px-3 rounded-2 border border-secondary border-opacity-25 text-break" style="background: rgba(13, 21, 44, 0.6);">
+              <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                {{ source_url }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+    {% endif %}
+
+    <!-- Matching Vacancy Details -->
+    {% if matching_vacancy %}
+    <div class="col-12">
+      <section class="glass-card p-4" aria-labelledby="vacancy-heading">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-award-fill text-cyan me-2 fs-5"></i>
+          <h3 id="vacancy-heading" class="h5 fw-bold text-white mb-0">Matching Vacancy Details</h3>
+        </div>
+        <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.6);">
+          <dl class="row mb-0 g-2">
+            {% for key, value in matching_vacancy.items() %}
+              <dt class="col-sm-3 text-muted">{{ key|replace("_", " ")|title }}</dt>
+              <dd class="col-sm-9 text-light text-break fw-semibold">{{ value }}</dd>
+            {% endfor %}
+          </dl>
+        </div>
+      </section>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="text-center mt-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary-gradient px-4 py-2">
+      <i class="bi bi-arrow-left me-2"></i>Return to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

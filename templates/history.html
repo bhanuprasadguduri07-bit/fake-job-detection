@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Detection History - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-white">Detection <span class="cooper-highlight">History</span></h2>
+      <p class="mb-0" style="color: var(--text-muted);">Audit log of all previously scanned text and poster job postings.</p>
+    </div>
+    <a class="btn btn-primary-gradient shadow-sm" href="{{ url_for('text_detection') }}">
+      <i class="bi bi-shield-plus me-1"></i> Analyse New Job
+    </a>
+  </div>
+
+  <section class="glass-card overflow-hidden">
+    {% if submissions %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 text-light" style="border-color: rgba(255, 255, 255, 0.08);">
+        <thead class="small text-uppercase" style="background: rgba(13, 21, 44, 0.85); color: var(--text-muted); letter-spacing: 0.6px;">
+          <tr>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3">Job Title</th>
+            <th class="py-3">Location</th>
+            <th class="py-3">Salary</th>
+            <th class="py-3">ML Prediction</th>
+            <th class="py-3">Confidence</th>
+            <th class="py-3">Verification</th>
+            <th class="py-3">Type</th>
+            <th class="py-3">Date</th>
+            <th class="py-3 px-4 text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for submission in submissions %}
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+            <td class="fw-semibold text-white px-4">{{ submission.company_name }}</td>
+            <td class="text-light">{{ submission.job_title }}</td>
+            <td style="color: var(--text-muted);">{{ submission.job_location or "—" }}</td>
+            <td style="color: var(--text-muted);">{{ submission.salary or "—" }}</td>
+            <td>
+              <span class="badge {% if submission.prediction_label == 'Likely Fake' %}bg-danger-subtle text-danger border border-danger-subtle{% elif submission.prediction_label == 'Likely Genuine' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary{% endif %}">
+                {{ submission.prediction_label or "Not available" }}
+              </span>
+            </td>
+            <td>
+              {% if submission.confidence_score is not none %}
+              <strong class="text-white">{{ (submission.confidence_score * 100)|round(1) }}%</strong>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if submission.verification_status == 'VERIFIED GENUINE' %}
+              <span class="badge-status status-verified small py-1">Verified Genuine</span>
+              {% elif submission.verification_status == 'LIKELY SUSPICIOUS' %}
+              <span class="badge-status status-suspicious small py-1">Suspicious</span>
+              {% else %}
+              <span class="badge-status status-unverified small py-1">Unverified</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge border border-secondary border-opacity-25" style="background: rgba(22, 34, 68, 0.5); color: var(--text-muted);">
+                {{ submission.submission_type|upper }}
+              </span>
+            </td>
+            <td class="small" style="color: var(--text-dim);">{{ submission.created_at[:16] }}</td>
+            <td class="px-4 text-end">
+              <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('result', submission_id=submission.id) }}">
+                View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="color: var(--text-muted);">
+      <img src="{{ url_for('static', filename='images/empty-state.svg') }}" alt="No history" style="width: 140px; opacity: 0.8;" class="mb-3">
+      <h4 class="h5 fw-bold text-white mb-2">No Job Analyses Recorded Yet</h4>
+      <p class="small mb-3">Begin by submitting job text or uploading a recruitment poster.</p>
+      <a class="btn btn-primary-gradient btn-sm" href="{{ url_for('text_detection') }}">Start Analysis</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

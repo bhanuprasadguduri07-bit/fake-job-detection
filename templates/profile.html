@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Preferences & Profile - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <!-- Section Header -->
+      <div class="d-flex align-items-center mb-4">
+        <div class="brand-icon fs-3 me-3"><i class="bi bi-person-gear"></i></div>
+        <div>
+          <h2 class="fw-bold mb-0 text-white">Preferences &amp; <span class="cooper-highlight">Profile</span></h2>
+          <p class="mb-0" style="color: var(--text-muted);">
+            {% if user_info.full_name %}{{ user_info.full_name }} &bull; {% endif %}{{ user_info.email }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Preferences Glass Form -->
+      <form method="POST" action="{{ url_for('profile') }}" class="glass-card p-4 p-md-5 mb-4">
+        <div class="border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-sliders text-cyan me-2"></i>Job Matching &amp; Alert Criteria</h3>
+          <p class="small mb-0" style="color: var(--text-muted);">Automated crawlers dispatch alerts when new vacancies meet or exceed 70% match.</p>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="preferred_title" class="form-label fw-semibold text-light">Preferred Job Title</label>
+            <input id="preferred_title" name="preferred_title" class="form-control" value="{{ user_req.preferred_title or '' }}" placeholder="e.g. Security Engineer">
+          </div>
+          <div class="col-md-6">
+            <label for="preferred_company" class="form-label fw-semibold text-light">Preferred Company</label>
+            <input id="preferred_company" name="preferred_company" class="form-control" value="{{ user_req.preferred_company or '' }}" placeholder="e.g. Google, Microsoft">
+          </div>
+          <div class="col-12">
+            <label for="required_skills" class="form-label fw-semibold text-light">Required Skills</label>
+            <input id="required_skills" name="required_skills" class="form-control" value="{{ user_req.required_skills or '' }}" placeholder="e.g. Python, Machine Learning, SIEM, Cloud Security">
+          </div>
+          <div class="col-md-6">
+            <label for="preferred_location" class="form-label fw-semibold text-light">Preferred Location</label>
+            <input id="preferred_location" name="preferred_location" class="form-control" value="{{ user_req.preferred_location or '' }}" placeholder="e.g. New York, Remote">
+          </div>
+          <div class="col-md-6">
+            <label for="minimum_salary" class="form-label fw-semibold text-light">Minimum Annual Salary ($)</label>
+            <input id="minimum_salary" name="minimum_salary" type="number" min="0" step="any" class="form-control" value="{{ user_req.minimum_salary or 0 }}" placeholder="e.g. 75000">
+          </div>
+          <div class="col-md-6">
+            <label for="experience_level" class="form-label fw-semibold text-light">Experience Level</label>
+            <input id="experience_level" name="experience_level" class="form-control" value="{{ user_req.experience_level or '' }}" placeholder="e.g. Mid-Senior level, 3-5 years">
+          </div>
+          <div class="col-md-6">
+            <label for="job_type" class="form-label fw-semibold text-light">Job Type</label>
+            <select id="job_type" name="job_type" class="form-select">
+              {% for option in ["Full-time", "Part-time", "Contract", "Internship", "Temporary"] %}
+              <option value="{{ option }}" {% if (user_req.job_type or "Full-time") == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-gradient mt-4 px-4 py-2 fw-semibold">
+          <i class="bi bi-save me-2"></i>Save Preferences
+        </button>
+      </form>
+
+      <!-- ML Model Telemetry & Metrics -->
+      {% if metrics %}
+      <section class="glass-card p-4 p-md-5">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+          <div>
+            <h3 class="h5 fw-bold text-white mb-0">
+              <i class="bi bi-cpu text-cyan me-2"></i>Active ML Model Telemetry
+            </h3>
+            <small style="color: var(--text-muted);">Trained on peer-reviewed {{ metrics.dataset_name or 'EMSCAD' }} dataset</small>
+          </div>
+          <span class="badge border border-success border-opacity-25" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
+            <i class="bi bi-shield-check me-1"></i> Production Model v1.0
+          </span>
+        </div>
+
+        <div class="row g-3 text-center">
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.7);">
+              <small class="d-block text-uppercase mb-1" style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.5px;">Accuracy</small>
+              <strong class="fs-4 text-success">{{ (metrics.accuracy * 100)|round(2) }}%</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.7);">
+              <small class="d-block text-uppercase mb-1" style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.5px;">Precision</small>
+              <strong class="fs-4 text-cyan">{{ (metrics.precision * 100)|round(2) }}%</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.7);">
+              <small class="d-block text-uppercase mb-1" style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.5px;">Recall</small>
+              <strong class="fs-4" style="color: #A78BFA;">{{ (metrics.recall * 100)|round(2) }}%</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25" style="background: rgba(13, 21, 44, 0.7);">
+              <small class="d-block text-uppercase mb-1" style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.5px;">F1 Score</small>
+              <strong class="fs-4 text-white">{{ (metrics.f1_score * 100)|round(2) }}%</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Text-Based Job Detection — Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <!-- Page Header -->
+      <div class="d-flex align-items-center mb-4">
+        <div class="brand-icon shadow" style="width: 52px; height: 52px; font-size: 1.4rem;">
+          <i class="bi bi-file-earmark-text-fill"></i>
+        </div>
+        <div>
+          <span class="hero-pill-badge mb-1 py-1 px-3 small">
+            Natural Language Processing Subsystem
+          </span>
+          <h2 class="fw-bold mb-0 text-white cooper-highlight">Text-Based Job Detection</h2>
+          <p class="small mb-0" style="color: var(--text-muted);">Submit the complete recruitment posting details for real-time linguistic classification and official website cross-verification.</p>
+        </div>
+      </div>
+
+      <!-- Glassmorphic Form Card -->
+      <div class="glass-card p-4 p-md-5">
+        <form method="POST" action="{{ url_for('text_detection') }}" novalidate>
+          
+          <!-- Section 1: Primary Details -->
+          <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+            <span class="badge rounded-circle me-3 p-2" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--grad-cyan-blue); color: #080D1B; font-weight: 800;">1</span>
+            <h5 class="fw-bold mb-0 text-white cooper-highlight">Primary Job Details</h5>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="company_name" class="form-label fw-bold small text-light">
+                Company Name <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                <input type="text" class="form-control" id="company_name" name="company_name" required
+                       placeholder="e.g. Google, Accenture, Infosys, Apex Tech"
+                       value="{{ form_data.company_name if form_data else '' }}">
+              </div>
+              <div class="form-text small">Used to automatically identify the company's authentic website and careers portal.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="job_title" class="form-label fw-bold small text-light">
+                Job Title <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                <input type="text" class="form-control" id="job_title" name="job_title" required
+                       placeholder="e.g. Associate Software Engineer, Data Entry Operator"
+                       value="{{ form_data.job_title if form_data else '' }}">
+              </div>
+              <div class="form-text small">Target vacancy title to match against official published requisitions.</div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="job_description" class="form-label fw-bold small text-light mb-0">
+                  Job Description &amp; Content <span class="text-danger">*</span>
+                </label>
+                <div class="small d-flex gap-2">
+                  <span id="desc_char_count" class="badge rounded-pill" style="background: rgba(17,27,53,0.9); border: 1px solid rgba(6,214,224,0.3); color: #06D6E0;">0 chars</span>
+                  <span id="desc_word_count" class="badge rounded-pill" style="background: rgba(17,27,53,0.9); border: 1px solid rgba(6,214,224,0.3); color: #06D6E0;">0 words</span>
+                </div>
+              </div>
+              <textarea class="form-control" id="job_description" name="job_description" rows="7" required
+                        placeholder="Paste the full job overview, roles, responsibilities, compensation details, and application instructions here...">{{ form_data.job_description if form_data else '' }}</textarea>
+              <div class="form-text small">Our TF-IDF model evaluates textual structure, fraud cues (e.g. money transfers, informal messaging apps), and linguistic entropy.</div>
+            </div>
+          </div>
+
+          <!-- Section 2: Compensation & Role Specifications -->
+          <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+            <span class="badge rounded-circle me-3 p-2" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--grad-cyan-blue); color: #080D1B; font-weight: 800;">2</span>
+            <h5 class="fw-bold mb-0 text-white cooper-highlight">Role Specifications &amp; Compensation</h5>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="salary" class="form-label fw-bold small text-light">Advertised Salary</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                <input type="text" class="form-control" id="salary" name="salary"
+                       placeholder="e.g. $85,000 / year or ₹45,000 / month"
+                       value="{{ form_data.salary if form_data else '' }}">
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="job_location" class="form-label fw-bold small text-light">Location</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" class="form-control" id="job_location" name="job_location"
+                       placeholder="e.g. New York, NY, Remote, Hybrid"
+                       value="{{ form_data.job_location if form_data else '' }}">
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="required_skills" class="form-label fw-bold small text-light">Required Skills</label>
+              <input type="text" class="form-control" id="required_skills" name="required_skills"
+                     placeholder="e.g. Python, SQL, AWS, Excel, Communication"
+                     value="{{ form_data.required_skills if form_data else '' }}">
+            </div>
+
+            <div class="col-md-6">
+              <label for="experience_requirements" class="form-label fw-bold small text-light">Experience Requirements</label>
+              <input type="text" class="form-control" id="experience_requirements" name="experience_requirements"
+                     placeholder="e.g. 1-3 years, Entry Level, Fresher"
+                     value="{{ form_data.experience_requirements if form_data else '' }}">
+            </div>
+
+            <div class="col-md-6">
+              <label for="education" class="form-label fw-bold small text-light">Education / Qualification</label>
+              <input type="text" class="form-control" id="education" name="education"
+                     placeholder="e.g. B.Tech / B.E / B.Sc / High School"
+                     value="{{ form_data.education if form_data else '' }}">
+            </div>
+
+            <div class="col-md-6">
+              <label for="contact_number" class="form-label fw-bold small text-light">Recruiter Contact Number <small class="text-muted">(Optional)</small></label>
+              <input type="tel" class="form-control" id="contact_number" name="contact_number"
+                     placeholder="e.g. +1 555-0199 or WhatsApp number"
+                     value="{{ form_data.contact_number if form_data else '' }}">
+            </div>
+          </div>
+
+          <!-- Section 3: Verification & Application Channels -->
+          <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+            <span class="badge rounded-circle me-3 p-2" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; background: var(--grad-cyan-blue); color: #080D1B; font-weight: 800;">3</span>
+            <h5 class="fw-bold mb-0 text-white cooper-highlight">Verification &amp; Application Channels</h5>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="recruiter_email" class="form-label fw-bold small text-light">Recruiter Email <small class="text-muted">(Optional)</small></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" id="recruiter_email" name="recruiter_email"
+                       placeholder="e.g. talent@company.com or hr@gmail.com"
+                       value="{{ form_data.recruiter_email if form_data else '' }}">
+              </div>
+              <div class="form-text small">Discrepancies (e.g. freemail domains like @gmail for major enterprises) are automatically flagged.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="application_url" class="form-label fw-bold small text-light">Application URL <small class="text-muted">(Optional)</small></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                <input type="url" class="form-control" id="application_url" name="application_url"
+                       placeholder="https://company.com/apply or https://jobs.lever.co/..."
+                       value="{{ form_data.application_url if form_data else '' }}">
+              </div>
+              <div class="form-text small">Checked against authorized ATS platforms (Workday, Greenhouse, Lever) and corporate apex domains.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="official_website_url" class="form-label fw-bold small text-light">Official Company Website URL <small class="text-muted">(Optional)</small></label>
+              <input type="url" class="form-control" id="official_website_url" name="official_website_url"
+                     placeholder="https://company.com"
+                     value="{{ form_data.official_website_url if form_data else '' }}">
+            </div>
+
+            <div class="col-md-6">
+              <label for="official_careers_url" class="form-label fw-bold small text-light">Official Careers Page URL <small class="text-muted">(Optional)</small></label>
+              <input type="url" class="form-control" id="official_careers_url" name="official_careers_url"
+                     placeholder="https://company.com/careers"
+                     value="{{ form_data.official_careers_url if form_data else '' }}">
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2">
+            <button type="submit" class="btn btn-primary-gradient btn-lg w-100 py-3 shadow">
+              <i class="bi bi-shield-check fs-5"></i>
+              <span class="fs-6 fw-bold">Analyse Job for Fraud &amp; Verify Authenticity</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

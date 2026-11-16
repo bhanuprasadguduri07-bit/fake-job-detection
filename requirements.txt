@@ -1,0 +1,10 @@
+Flask
+python-dotenv
+Pillow
+beautifulsoup4
+pytesseract
+requests
+APScheduler
+numpy
+pandas
+scikit-learn

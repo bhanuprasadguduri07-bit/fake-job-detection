@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Job Monitoring - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Section Header -->
+  <div class="d-flex align-items-center mb-4">
+    <div class="brand-icon fs-3 me-3"><i class="bi bi-clock-history"></i></div>
+    <div>
+      <h2 class="fw-bold mb-0 text-white">Automated Job <span class="cooper-highlight">Monitoring</span></h2>
+      <p class="mb-0" style="color: var(--text-muted);">
+        Continuous 24-hour background crawler for official careers pages, detecting new postings and matching user preferences.
+      </p>
+    </div>
+  </div>
+
+  <!-- Add Monitor Glass Form -->
+  <form method="POST" action="{{ url_for('monitoring') }}" class="glass-card p-4 mb-4">
+    <h3 class="h5 fw-bold text-white mb-3">
+      <i class="bi bi-plus-circle text-cyan me-2"></i>Add a Company Careers Portal to Monitor
+    </h3>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label for="company_name" class="form-label fw-semibold text-light">Company Name</label>
+        <input id="company_name" name="company_name" class="form-control" placeholder="e.g. Google, Apple, Amazon" required>
+      </div>
+      <div class="col-md-5">
+        <label for="careers_url" class="form-label fw-semibold text-light">Careers URL</label>
+        <input id="careers_url" name="careers_url" type="url" class="form-control" placeholder="https://careers.google.com" required>
+      </div>
+      <div class="col-md-2 d-grid">
+        <button class="btn btn-primary-gradient py-2 fw-semibold" type="submit">
+          <i class="bi bi-broadcast me-1"></i> Add Monitor
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Monitored Companies Section -->
+  <section class="glass-card overflow-hidden mb-4">
+    <div class="p-3 px-4 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+      <h3 class="h5 fw-bold text-white mb-0">
+        <i class="bi bi-buildings text-cyan me-2"></i>Monitored Companies
+      </h3>
+      <span class="badge border border-info border-opacity-25 small" style="background: rgba(6, 214, 224, 0.1); color: var(--neon-cyan);">
+        24h Cron Scheduled
+      </span>
+    </div>
+    {% if monitored_sites %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 text-light" style="border-color: rgba(255, 255, 255, 0.08);">
+        <thead class="small text-uppercase" style="background: rgba(13, 21, 44, 0.85); color: var(--text-muted); letter-spacing: 0.6px;">
+          <tr>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3">Careers Page</th>
+            <th class="py-3">Status</th>
+            <th class="py-3">Open Vacancies</th>
+            <th class="py-3">Last Checked</th>
+            <th class="py-3 px-4 text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for site in monitored_sites %}
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+            <td class="fw-semibold text-white px-4">{{ site.company_name }}</td>
+            <td class="text-break">
+              <a href="{{ site.careers_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+                {{ site.careers_url }} <i class="bi bi-box-arrow-up-right small"></i>
+              </a>
+            </td>
+            <td>
+              <span class="badge {% if site.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ site.status|capitalize }}
+              </span>
+              {% if site.last_status_message %}
+              <small class="d-block" style="color: var(--text-dim);">{{ site.last_status_message }}</small>
+              {% endif %}
+            </td>
+            <td class="text-white fw-bold">{{ site.open_vacancies_count }}</td>
+            <td style="color: var(--text-muted);">{{ site.last_checked_at or "Pending" }}</td>
+            <td class="text-nowrap text-end px-4">
+              {% if site.status == "active" %}
+              <a class="btn btn-sm btn-outline-secondary me-1" href="{{ url_for('monitoring_action', site_id=site.id, action='pause') }}">Pause</a>
+              {% else %}
+              <a class="btn btn-sm btn-outline-success me-1" href="{{ url_for('monitoring_action', site_id=site.id, action='resume') }}">Resume</a>
+              {% endif %}
+              <a class="btn btn-sm btn-outline-primary me-1" href="{{ url_for('monitoring_action', site_id=site.id, action='check_now') }}">Check now</a>
+              <a class="btn btn-sm btn-outline-danger" href="{{ url_for('monitoring_action', site_id=site.id, action='delete') }}">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="p-4 mb-0" style="color: var(--text-muted);">No companies are being monitored yet. Add a URL above to start automatic tracking.</p>
+    {% endif %}
+  </section>
+
+  <!-- Discovered Vacancies Section -->
+  <section class="glass-card overflow-hidden mb-4">
+    <div class="p-3 px-4 border-bottom border-secondary border-opacity-25">
+      <h3 class="h5 fw-bold text-white mb-0">
+        <i class="bi bi-search text-cyan me-2"></i>Discovered Vacancies
+      </h3>
+    </div>
+    {% if postings %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 text-light" style="border-color: rgba(255, 255, 255, 0.08);">
+        <thead class="small text-uppercase" style="background: rgba(13, 21, 44, 0.85); color: var(--text-muted); letter-spacing: 0.6px;">
+          <tr>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3">Job Title</th>
+            <th class="py-3">Location</th>
+            <th class="py-3">Status</th>
+            <th class="py-3">Posting URL</th>
+            <th class="py-3 px-4">Last Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for posting in postings %}
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+            <td class="fw-semibold text-white px-4">{{ posting.company_name }}</td>
+            <td class="text-white">{{ posting.job_title }}</td>
+            <td style="color: var(--text-muted);">{{ posting.job_location or "—" }}</td>
+            <td>
+              <span class="badge {% if posting.status == 'open' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary{% endif %}">
+                {{ posting.status|capitalize }}
+              </span>
+            </td>
+            <td>
+              {% if posting.job_url %}
+              <a href="{{ posting.job_url }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-break text-decoration-none small">
+                {{ posting.job_url }} <i class="bi bi-box-arrow-up-right small"></i>
+              </a>
+              {% else %}—{% endif %}
+            </td>
+            <td class="px-4" style="color: var(--text-muted);">{{ posting.last_seen_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="p-4 mb-0" style="color: var(--text-muted);">No vacancies have been discovered yet from the active crawlers.</p>
+    {% endif %}
+  </section>
+
+  <!-- Monitoring History Section -->
+  <section class="glass-card overflow-hidden">
+    <div class="p-3 px-4 border-bottom border-secondary border-opacity-25">
+      <h3 class="h5 fw-bold text-white mb-0">
+        <i class="bi bi-clock text-cyan me-2"></i>Monitoring History Log
+      </h3>
+    </div>
+    {% if history %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 text-light" style="border-color: rgba(255, 255, 255, 0.08);">
+        <thead class="small text-uppercase" style="background: rgba(13, 21, 44, 0.85); color: var(--text-muted); letter-spacing: 0.6px;">
+          <tr>
+            <th class="py-3 px-4">Company</th>
+            <th class="py-3">Checked</th>
+            <th class="py-3">Status</th>
+            <th class="py-3">Vacancies</th>
+            <th class="py-3">New</th>
+            <th class="py-3">Reopened</th>
+            <th class="py-3 px-4">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in history %}
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+            <td class="fw-semibold text-white px-4">{{ entry.company_name }}</td>
+            <td style="color: var(--text-muted);">{{ entry.check_timestamp }}</td>
+            <td>
+              <span class="badge {% if entry.status == 'success' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+                {{ entry.status }}
+              </span>
+            </td>
+            <td class="text-white">{{ entry.vacancies_found }}</td>
+            <td class="text-success fw-bold">+{{ entry.new_vacancies_found }}</td>
+            <td class="text-info">{{ entry.reopened_vacancies_found }}</td>
+            <td class="px-4 small" style="color: var(--text-muted);">{{ entry.notes or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="p-4 mb-0" style="color: var(--text-muted);">No monitoring checks have been recorded yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

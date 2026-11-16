@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Fake Job Detection{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-white">System <span class="cooper-highlight">Notifications</span></h2>
+      <p class="mb-0" style="color: var(--text-muted);">Real-time vacancy matches and automated crawler verification alerts.</p>
+    </div>
+    {% if notifications %}
+    <a class="btn btn-outline-primary" href="{{ url_for('mark_all_notifications_read') }}">
+      <i class="bi bi-check2-all me-1"></i> Mark All as Read
+    </a>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+  <div class="d-grid gap-3">
+    {% for notification in notifications %}
+    <article class="glass-card p-4 {% if not notification.is_read %}border-start border-4 border-info{% endif %}" style="transition: all 0.2s ease;">
+      <div class="d-flex justify-content-between flex-wrap gap-3">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <h3 class="h5 fw-bold text-white mb-0">{{ notification.title }}</h3>
+            {% if not notification.is_read %}
+            <span class="badge bg-primary-subtle text-info border border-info border-opacity-25 small">New</span>
+            {% endif %}
+          </div>
+          <p class="text-light mb-2">{{ notification.message }}</p>
+          <div class="d-flex align-items-center flex-wrap gap-2 small mb-2" style="color: var(--text-muted);">
+            <span class="fw-semibold text-white">{{ notification.company_name }}</span>
+            {% if notification.job_title %}
+            <span>&bull; {{ notification.job_title }}</span>
+            {% endif %}
+            {% if notification.match_percentage is not none %}
+            <span class="text-cyan fw-bold">&bull; {{ notification.match_percentage }}% match</span>
+            {% endif %}
+          </div>
+          {% if notification.verification_status %}
+          <div class="mt-2">
+            <span class="badge-status {% if notification.verification_status == 'VERIFIED GENUINE' %}status-verified{% elif notification.verification_status == 'LIKELY SUSPICIOUS' %}status-suspicious{% else %}status-unverified{% endif %} small py-1">
+              {{ notification.verification_status }}
+            </span>
+          </div>
+          {% endif %}
+          {% if notification.source_link %}
+          <p class="small text-break mt-2 mb-0">
+            <i class="bi bi-link-45deg text-cyan"></i>
+            <a href="{{ notification.source_link }}" target="_blank" rel="noopener noreferrer" class="text-cyan text-decoration-none">
+              {{ notification.source_link }} <i class="bi bi-box-arrow-up-right small"></i>
+            </a>
+          </p>
+          {% endif %}
+        </div>
+        <div class="text-md-end text-nowrap d-flex flex-column justify-content-between align-items-end">
+          <small class="d-block mb-3" style="color: var(--text-dim);">{{ notification.created_at }}</small>
+          {% if not notification.is_read %}
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('mark_notification_read', notif_id=notification.id) }}">
+            <i class="bi bi-check me-1"></i>Mark Read
+          </a>
+          {% else %}
+          <span class="badge border border-secondary border-opacity-25" style="background: rgba(22, 34, 68, 0.4); color: var(--text-muted);">Read</span>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="glass-card p-5 text-center" style="color: var(--text-muted);">
+    <img src="{{ url_for('static', filename='images/empty-state.svg') }}" alt="No notifications" style="width: 140px; opacity: 0.8;" class="mb-3">
+    <h4 class="h5 fw-bold text-white mb-2">No Active Notifications</h4>
+    <p class="small mb-0">You're completely caught up! New alerts from monitored company portals will appear here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
