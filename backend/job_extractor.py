@@ -5,7 +5,7 @@ Extracts title, location, description, and application links from HTML structure
 
 import re
 import urllib.parse
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional,Tuple
 from bs4 import BeautifulSoup
 from backend.website_verifier import safe_fetch_url, clean_text
 from config import Config
