@@ -8,3 +8,4 @@ APScheduler
 numpy
 pandas
 scikit-learn
+gunicorn
